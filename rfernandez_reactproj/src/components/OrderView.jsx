@@ -45,7 +45,7 @@ const OrderView = ({ email }) => {
         console.error(err);
       }
 
-
+      console.log("cartidss: " + id)
       try {
         const q = query(orderRef, where("order_id", "==", id));
 

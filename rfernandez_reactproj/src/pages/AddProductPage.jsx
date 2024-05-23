@@ -102,7 +102,7 @@ const AddProductPage = ({ addProductSubmit }) => {
     }
   };
 
-
+  const searchTerms = name.toLowerCase().split(" ")
   const submitForm = (e) => {
     e.preventDefault();
 
@@ -113,7 +113,8 @@ const AddProductPage = ({ addProductSubmit }) => {
       category,
       price,
       stock,
-      shipping
+      shipping,
+      searchTerms
     };
 
     addProductSubmit(newItem);

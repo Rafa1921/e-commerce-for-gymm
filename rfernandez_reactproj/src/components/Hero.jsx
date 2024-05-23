@@ -4,7 +4,7 @@ import carouselImg3 from '../assets/images/asd2.jpg'
 import carouselImg4 from '../assets/images/asd3.jpeg'
 import 'flowbite'
 const Hero = ({
-  title = 'Welcome to the Rephs Gym Family!',
+  title = 'Welcome to the RepsPh Gym Family!',
   subtitle = 'Together we aim to defeat the worst versions of ourselves',
 }) => {
   return (

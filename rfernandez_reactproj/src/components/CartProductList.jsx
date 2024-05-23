@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import {FaTrash} from 'react-icons/fa'
+import { FaTrash } from 'react-icons/fa'
 import { auth, db } from '../config/firebase';
 import { getDocs, getDoc, doc, collection, query, where, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -8,12 +8,12 @@ import { toast } from 'react-toastify';
 
 
 
-const CartProductList = ({ product }) => {
+const CartProductList = ({ product, updateShipCart }) => {
   const location = useLocation();
   const [user, setUser] = useState('');
   let cartId = '';
   let cartRefId = '';
-  
+  const [quantity, setQuantity] = useState(product.quantity);
   const orderRef = collection(db, "order");
   const orderUserCartRef = collection(db, "orderUserCart");
   const userCartRef = collection(db, "userCart");
@@ -27,13 +27,13 @@ const CartProductList = ({ product }) => {
     onAuthStateChanged(auth, (user) => {
       console.log(user);
       if (user == null || user == undefined) {
-          return navigate("/login");
+        return navigate("/login");
       }
 
       setUser(user.email);
     });
 
-
+    
 
 
   }, [user]);
@@ -46,10 +46,9 @@ const CartProductList = ({ product }) => {
 
     if (!confirm) return;
     cartId = await getDocId("cart")
-    console.log("cartId: " + cartId)
+
     cartRefId = await getDocId("cartRef", cartId)
-    console.log("cartRefId: " + cartRefId)
-    
+
 
     const docRef = doc(db, "cart", cartRefId);
     try {
@@ -65,6 +64,66 @@ const CartProductList = ({ product }) => {
     navigate('/products');
   };
 
+
+  const updateQty = async (newQty, cartId, itemPrice, cartRef, productId) => {
+    const docRef = doc(db, "cart", cartId);
+
+
+    setQuantity(newQty);
+
+    await updateDoc(docRef, {
+      quantity: parseInt(newQty)
+
+    });
+
+    updateShipCart(newQty, productId, cartRef);
+        console.log("Wow item: " + newQty)
+
+    const orderId = await getDocId('', cartRef);
+      console.log("cart reff: " + orderId )
+    const orderRefId = await getOrderDetail(orderId)
+
+    const q = doc(db, "order", orderRefId);
+
+    let order = [];
+
+    try {
+      const fetchData = await getDoc(q);
+      const data = fetchData.data();
+
+      order = data;
+
+    } catch (err) {
+      console.error(err);
+    }
+
+    
+
+    const docRef2 = doc(db, "order", orderRefId);
+    await updateDoc(docRef2, {
+      order_productCost: parseInt(order.order_productCost) + parseInt(itemPrice),
+      order_totalCost: parseInt(order.order_totalCost) + parseInt(itemPrice)
+    });
+    console.log("hereee")
+    location.reload();
+
+  }
+
+  const getOrderDetail = async (orderId) => {
+    const q = query(orderRef, where("order_id", "==", orderId));
+
+    const querySnapshot = await getDocs(q);
+
+    let docId = '';
+    querySnapshot.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+      docId = doc.id;
+    });
+
+    return docId;
+
+  }
+
   const getDocId = async (type, docID = "") => {
     try {
       let q = '';
@@ -73,7 +132,9 @@ const CartProductList = ({ product }) => {
         q = query(userCartRef, where("authEmail", "==", user));
       } else if (type == "cartRef") {
         q = query(cartRef, where("cart_id", "==", docID));
-      } 
+      } else {
+        q = query(orderUserCartRef, where("cart_id", "==", docID));
+      }
 
 
       const querySnapshot = await getDocs(q);
@@ -118,13 +179,53 @@ const CartProductList = ({ product }) => {
 
             <div className='flex flex-col lg:flex-row justify-between mb-4'>
               <div className='mb-3'>
+                <form className='justify-normal w-44'>
 
-               
-              </div>
-              <div>
-                <h3 className='text-black inline'> {product.quantity} qty</h3>
+                  <div className={location.pathname == "/cart" ? 'mb-4':'hidden'}>
+                    <label
+                      htmlFor='quantity'
+                      className='block text-gray-700 font-bold mb-2'
+                    >
+                      Quantity
+                    </label>
+                    <input
+                      id='quantity'
+                      type='number'
+                      min={1}
+                      name='quantity'
+                      defaultValue={quantity}
+                      value={quantity}
+                      className='border rounded w-full py-2 px-3'
+                      placeholder='Enter Available quantitys'
+                      onChange={(e) => updateQty(e.target.value, product.id, product.product_price, product.cart_id, product.product_id)}
+                      required
+                    />
+                  </div>
+
+                  <div className={location.pathname == "/cart" ? 'hidden':'mb-4'}>
+                    <label
+                      htmlFor='quantity'
+                      className='block text-gray-700 font-bold mb-2'
+                    >
+                      Quantity
+                    </label>
+                    <input
+                      id='quantity'
+                      type='text'
+                      min={1}
+                      name='quantity'
+                      defaultValue={quantity}
+                      value={quantity}
+                      className='border rounded max-w-14 text-center font-bold py-2 px-3 pointer-events-none'
+                      placeholder='Enter Available quantitys'
+                      onChange={(e) => updateQty(e.target.value, product.id, product.product_price, product.cart_id, product.product_id)}
+                      required
+                    />
+                  </div>
+                </form>
 
               </div>
+
 
             </div>
             <div className='border border-gray-100 mb-5'></div>
@@ -135,9 +236,9 @@ const CartProductList = ({ product }) => {
                 +&#8369;{product.product_shipping} Shipping
               </div>
 
-              <div className={location.pathname=="/cart"?"text-red-600 hover:text-red-800 cursor-pointer":"hidden"} >
+              <div className={location.pathname == "/cart" ? "text-red-600 hover:text-red-800 cursor-pointer" : "hidden"} >
 
-                <FaTrash onClick={onDeleteClick}/>
+                <FaTrash onClick={onDeleteClick} />
               </div>
             </div>
           </aside>

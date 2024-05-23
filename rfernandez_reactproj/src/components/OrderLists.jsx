@@ -33,9 +33,6 @@ const OrderLists = ({ email }) => {
     if (email == null){
       email = user;
     }
-
-    
-    console.log("order email: " + user)
     try {
       const q = query(orderRef, where("authEmail", "==", user),);
       

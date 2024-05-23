@@ -37,8 +37,10 @@ const CheckoutLists = ({ email }) => {
 
 
     const getCardData = async () => {
+     
       let cartId = '';
       cartId = await getDocId('cart');
+
 
 
       const q = query(cartRef, where("cart_id", "==", cartId));
@@ -62,6 +64,8 @@ const CheckoutLists = ({ email }) => {
       setLoading(false);
     };
     getCardData();
+
+
   }, [email]);
 
   const getDetails = async () => {
@@ -171,7 +175,6 @@ const CheckoutLists = ({ email }) => {
   };
 
 
-
   const getDocId = async (type) => {
     try {
       let q = '';
@@ -197,7 +200,7 @@ const CheckoutLists = ({ email }) => {
         docId = doc.id;
       });
 
-
+      console.log("ta result: " + docId)
       return docId;
     } catch (err) {
       console.log(err);
@@ -205,6 +208,23 @@ const CheckoutLists = ({ email }) => {
   };
 
 
+  // const noCartItems = async () => {
+  //   let cartId = '';
+
+  //   await getDocId('cart').then((id) => {
+  //     console.log('caaasxcsas: ' + id);
+  //     setTimeout('', 5000)
+  //     if(id==null || id ==""){
+  //      return navigate('/cart')
+  //     }
+  //   });
+
+
+    
+  // }
+
+
+  // noCartItems();
   return (
 
 

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { onAuthStateChanged } from 'firebase/auth';
 import ViewAllProducts from '../components/ViewAllProducts';
 import ProductLists from '../components/ProductLists';
+import AboutUs from '../components/AboutUs';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const HomePage = () => {
   return (
     <>
       <Hero />
+      <AboutUs />
       <ProductLists isHome={'home'} />
       <ViewAllProducts />
     </>

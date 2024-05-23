@@ -33,6 +33,7 @@ const App = () => {
 
 
   if (auth?.currentUser?.displayName == null) {
+    if(auth.currentUser != null)
     updateProfile(auth.currentUser, {
       displayName: "Regular"
     })
@@ -92,6 +93,7 @@ const App = () => {
         itemPrice: newProduct.price,
         itemStock: newProduct.stock,
         itemShipping: newProduct.shipping,
+        itemSearch: newProduct.searchTerms,
         isActive: true,
       }).then(docRef => {
         addDoc(itemAnalyticsRef, {

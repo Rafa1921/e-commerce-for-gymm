@@ -12,10 +12,8 @@ const CartProductLists = ({ email }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [shipping, setShipping] = useState(0);
+  const [orderTotal, setOrderTotal] = useState(0);
   const [cart, setCart] = useState(0);
-  const [orderCost, setOrderCost] = useState(0);
-  const [user, setUser] = useState('');
-
   const navigate = useNavigate();
 
   const orderRef = collection(db, "order");
@@ -26,7 +24,7 @@ const CartProductLists = ({ email }) => {
   useEffect(() => {
     // Get All Items
 
-
+    let data = []
     const getCardData = async () => {
       let docId = '';
       docId = await getDocId('cart');
@@ -37,7 +35,7 @@ const CartProductLists = ({ email }) => {
 
       const querySnapshot = await getDocs(q);
 
-      const data = querySnapshot.docs.map((doc) => ({
+      data = querySnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
@@ -45,47 +43,13 @@ const CartProductLists = ({ email }) => {
       setProducts(data);
 
 
-
-      for (const product of data) {
-        setShipping(prevShipping => prevShipping + parseInt(product.product_shipping));
-        setCart(prevCart => prevCart + (parseInt(product.product_price) * product.quantity));
-        setOrderCost(prevOrderCost => prevOrderCost + parseInt(shipping) + parseInt(cart));
-
-      }
-
-
+      setShipCart(data, 0, 0);
 
 
       setLoading(false);
     };
     getCardData();
   }, [email]);
-
-
-  const onDeleteClick = async (productId) => {
-    const confirm = window.confirm(
-      'Are you sure you want to delete this product?'
-    );
-
-    if (!confirm) return;
-
-    const cartId = getDocId("cart")
-    const cartRefId = getDocId("cartRef", cartId)
-
-    const docRef = doc(db, "cart", cartRefId);
-    try {
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error(err);
-    }
-
-
-    toast.success('Product deleted successfully');
-
-    navigate('/products');
-  };
-
-
 
 
   // Proceed to Checkout
@@ -126,8 +90,8 @@ const CartProductLists = ({ email }) => {
             order_shipping: shipping,
             order_productCost: cart,
             order_totalCost: shipping + cart,
-            order_address: "1234 Tandang Sora Ave., Quezon City 1890",
-            order_paymentMethod: "Cash",
+            order_address: "",
+            order_paymentMethod: "",
           }
           )
 
@@ -147,6 +111,43 @@ const CartProductLists = ({ email }) => {
   };
 
 
+  const setShipCart = (data, quantity, productId) => {
+    for (const product of data) {
+      if(productId == 0)
+      setShipping(prevShipping => prevShipping + parseInt(product.product_shipping));
+      if (product.id == productId) {
+        
+        setCart(prevCart => prevCart + (parseInt(product.product_price) * parseInt(quantity)));
+      }
+      else {
+       
+        setCart(prevCart => prevCart + (parseInt(product.product_price) * parseInt(product.quantity)));
+
+      } 
+      console.log("daataid cart: " + cart)
+      console.log("setting cart: " + shipping)
+      setOrderTotal(prevOrderTotal => prevOrderTotal + (parseInt(shipping) + parseInt(cart)))
+    }
+    
+  }
+  const updateShipCart = async (quantity, productId, cartRefId) => {
+
+    setCart(0);
+    setOrderTotal(0);
+    const q = query(cartRef, where("cart_id", "==", cartRefId));
+
+    const querySnapshot = await getDocs(q);
+
+    const data = querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
+    console.log("check id boi cart: " + data[0].product_name)
+    setShipCart(data, quantity, productId);
+
+  }
+
+
 
   const getDocId = async (type, docID = "") => {
     try {
@@ -156,7 +157,7 @@ const CartProductLists = ({ email }) => {
         q = query(userCartRef, where("authEmail", "==", email));
       } else if (type == "order") {
         q = query(orderRef, where("order_id", "==", docID));
-    }  else if (type == "cartRef") {
+      } else if (type == "cartRef") {
         q = query(cartRef, where("cart_id", "==", docID));
       } else {
         q = query(orderUserCartRef, where("authEmail", "==", email), where("isActive", "==", true));
@@ -170,7 +171,7 @@ const CartProductLists = ({ email }) => {
         // doc.data() is never undefined for query doc snapshots
         docId = doc.id;
       });
-
+      console.log("cartiddd: " + docId)
 
       return docId;
     } catch (err) {
@@ -190,7 +191,7 @@ const CartProductLists = ({ email }) => {
       <div className='container m-auto py-10 px-6'>
         <div className='grid grid-cols-1 md:grid-cols-70/30 gap-6'>
           <main>
-          <div className="font-bold text-2xl text-indigo-800 mb-10  underline underline-offset-8">Items On Your Cart</div>
+            <div className="font-bold text-2xl text-indigo-800 mb-10  underline underline-offset-8">Items On Your Cart</div>
             <div className='container-xl lg:container m-auto'>
 
               {loading ? (
@@ -198,7 +199,7 @@ const CartProductLists = ({ email }) => {
               ) : (
                 <div className='grid grid-cols-1 md:grid-cols-1 gap-2'>
                   {products.map((product) => (
-                    <CartProductList key={product.id} product={product} />
+                    <CartProductList key={product.id} product={product} updateShipCart={updateShipCart} />
                   ))}
 
 
@@ -222,7 +223,8 @@ const CartProductLists = ({ email }) => {
               <form>
                 <Link
                   onClick={proceedCheckout}
-                  className='bg-indigo-500 hover:bg-indigo-600 text-white text-center font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block'
+                  className={shipping>0?'bg-indigo-500 hover:bg-indigo-600 text-white text-center font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block'
+                  :'bg-indigo-500 hover:bg-indigo-600 text-white text-center font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block pointer-events-none'}
                 >
                   Proceed to Checkout
                 </Link>
