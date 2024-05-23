@@ -56,7 +56,9 @@ const LoginPage = () => {
                 toast.success('Registration successful!');
                 return navigate('/');
             } catch (error) {
-                console.error(error)
+                console.error(error.message.toString())
+                if(error.message.toString() == "Firebase: Error (auth/email-already-in-use)." )
+                toast.warn("The email you entered is already in use");
             }
         }
     };

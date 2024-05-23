@@ -1,5 +1,4 @@
 import { NavLink, Link } from 'react-router-dom';
-import logo from '../assets/images/logo.png';
 import { FaAngleDown } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { auth, db } from '../config/firebase';

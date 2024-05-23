@@ -17,8 +17,7 @@ const UpdateProductPage = ({ updateProductSubmit }) => {
   const [stock, setStock] = useState(product.itemStock);
   const [shipping, setShipping] = useState(product.itemShipping);
 
-  const [imageViewer, setImageViewer] = useState(defaultImage);
-
+  const [imageViewer, setImageViewer] = useState(product.itemImage);
 
   const uploadImage = (e) => {
     setImageViewer(URL.createObjectURL(e.target.files[0]));
